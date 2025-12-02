@@ -1,3 +1,4 @@
+// api/evaluations/route.ts
 import connectMongoDB from '@/libs/mongodb'
 import Evaluation from '@/models/evaluation'
 import Course from '@/models/course'

@@ -8,6 +8,7 @@ import {
   UserButton,
 } from '@clerk/nextjs'
 import { Geist, Geist_Mono } from 'next/font/google'
+import Link from 'next/link' // 🔹 추가
 import './globals.css'
 
 const geistSans = Geist({
@@ -46,6 +47,10 @@ export default function RootLayout({
               </SignUpButton>
             </SignedOut>
             <SignedIn>
+              {/* 🔹 여기 내 페이지 링크 추가 */}
+              <Link href="/me" className="text-sm sm:text-base underline">
+                내 페이지
+              </Link>
               <UserButton />
             </SignedIn>
           </header>
