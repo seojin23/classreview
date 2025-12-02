@@ -110,7 +110,7 @@ export default function Header() {
             </button>
 
             <Link
-              href="/me"
+              href="/me" //임시 링크
               className={
                 'hover:text-blue-600 ' +
                 (isActive('/me')
@@ -146,7 +146,7 @@ export default function Header() {
             <form
               onSubmit={(e) => {
                 e.preventDefault()
-                //검색 연결
+                //검색 시스템 연결
               }}
               className="flex items-center gap-2"
             >
