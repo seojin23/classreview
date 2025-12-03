@@ -48,10 +48,19 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await connectMongoDB()
-    const courses = await Course.find().populate('professor')
+
+    const keyword = request.nextUrl.searchParams.get('keyword') || ''
+
+    let query = {}
+    if (keyword) {
+      query = { title: { $regex: keyword, $options: 'i' } }
+    }
+
+    const courses = await Course.find(query).populate('professor')
+
     return NextResponse.json({ courses })
   } catch (error) {
     console.error('GET 오류 발생 /api/courses :', error)
@@ -64,7 +73,7 @@ export async function GET() {
 
 export async function DELETE(request: NextRequest) {
   try {
-    await requireAdmin(request) // 관리자 권한 체크
+    await requireAdmin(request)
 
     const id = request.nextUrl.searchParams.get('id')
     if (!id) {
@@ -73,7 +82,6 @@ export async function DELETE(request: NextRequest) {
 
     await connectMongoDB()
 
-    // 삭제 대상 강의 존재 확인
     const course = await Course.findById(id)
     if (!course) {
       return NextResponse.json(
@@ -82,10 +90,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // 강의에 연결된 평가들 일괄 삭제
     await Evaluation.deleteMany({ course: id })
-
-    // 강의 삭제
     await Course.findByIdAndDelete(id)
 
     return NextResponse.json({
