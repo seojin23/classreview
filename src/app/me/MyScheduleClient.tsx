@@ -2,160 +2,244 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 
-interface Course {
+type ProfessorObj = {
+  _id: string
+  name: string
+  department?: string
+  email?: string
+}
+
+type CourseLite = {
   _id: string
   title: string
   code: string
+  // 문자열일 수도, 객체일 수도 있다고 가정
+  professor?: string | ProfessorObj
 }
 
-interface Enrollment {
+type Enrollment = {
   _id: string
-  course: Course
+  course: CourseLite
+}
+
+// 🔹 교수 이름 뽑는 헬퍼 함수
+function getProfessorName(prof?: string | ProfessorObj) {
+  if (!prof) return undefined
+  if (typeof prof === 'string') return prof
+  return prof.name // 객체일 때는 name만 사용
 }
 
 export default function MyScheduleClient() {
-  const [allCourses, setAllCourses] = useState<Course[]>([])
-  const [myEnrollments, setMyEnrollments] = useState<Enrollment[]>([])
+  const [courses, setCourses] = useState<CourseLite[]>([])
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  async function loadData() {
-    try {
-      setLoading(true)
-      setError(null)
-
-      // 내 시간표
-      const resEnroll = await fetch('/api/enrollments')
-      if (!resEnroll.ok) {
-        throw new Error('내 시간표를 불러오지 못했습니다.')
-      }
-      const enrollData = await resEnroll.json()
-
-      // 전체 강의 목록
-      const resCourses = await fetch('/api/courses')
-      if (!resCourses.ok) {
-        throw new Error('강의 목록을 불러오지 못했습니다.')
-      }
-      const courseData = await resCourses.json()
-
-      setMyEnrollments(enrollData.enrollments ?? [])
-      setAllCourses(courseData.courses ?? [])
-    } catch (e: any) {
-      setError(e.message ?? '알 수 없는 오류가 발생했습니다.')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
-    loadData()
+    const fetchData = async () => {
+      try {
+        const [courseRes, enrollRes] = await Promise.all([
+          fetch('/api/courses'),
+          fetch('/api/enrollments'),
+        ])
+
+        const courseJson = await courseRes.json()
+        const enrollJson = await enrollRes.json()
+
+        setCourses(courseJson.courses ?? [])
+        setEnrollments(enrollJson.enrollments ?? [])
+      } catch (error) {
+        console.error('시간표 데이터 로딩 오류:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
   }, [])
 
-  async function addCourse(courseId: string) {
+  const filteredCourses = courses.filter((c) => {
+    if (!search.trim()) return true
+    const q = search.trim().toLowerCase()
+    const profName = getProfessorName(c.professor)?.toLowerCase() ?? ''
+    return (
+      c.title.toLowerCase().includes(q) ||
+      c.code.toLowerCase().includes(q) ||
+      profName.includes(q)
+    )
+  })
+
+  const isEnrolled = (courseId: string) =>
+    enrollments.some((e) => e.course._id === courseId)
+
+  const handleAdd = async (courseId: string) => {
     try {
       const res = await fetch('/api/enrollments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ courseId }),
+        body: JSON.stringify({ course: courseId }),
       })
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        alert(data.message ?? '추가 실패')
+        const err = await res.json().catch(() => ({}))
+        alert(err.message ?? '시간표 추가 중 오류가 발생했습니다.')
         return
       }
 
-      await loadData()
-    } catch {
-      alert('추가 중 오류가 발생했습니다.')
+      const data = await res.json()
+      if (data.enrollment) {
+        setEnrollments((prev) => [...prev, data.enrollment])
+      } else {
+        const enrollRes = await fetch('/api/enrollments')
+        const enrollJson = await enrollRes.json()
+        setEnrollments(enrollJson.enrollments ?? [])
+      }
+    } catch (error) {
+      console.error('시간표 추가 오류:', error)
+      alert('시간표 추가 중 오류가 발생했습니다.')
     }
   }
 
-  async function removeEnrollment(id: string) {
+  const handleRemove = async (enrollmentId: string) => {
     try {
-      const res = await fetch(`/api/enrollments?id=${id}`, {
+      const res = await fetch(`/api/enrollments?id=${enrollmentId}`, {
         method: 'DELETE',
       })
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        alert(data.message ?? '삭제 실패')
+        const err = await res.json().catch(() => ({}))
+        alert(err.message ?? '시간표 삭제 중 오류가 발생했습니다.')
         return
       }
 
-      await loadData()
-    } catch {
-      alert('삭제 중 오류가 발생했습니다.')
+      setEnrollments((prev) => prev.filter((e) => e._id !== enrollmentId))
+    } catch (error) {
+      console.error('시간표 삭제 오류:', error)
+      alert('시간표 삭제 중 오류가 발생했습니다.')
     }
   }
 
-  if (loading) return <p className="text-sm text-gray-500">불러오는 중...</p>
-  if (error) return <p className="text-sm text-red-500">{error}</p>
-
-  // 이미 시간표에 있는 강의 ID 집합
-  const enrolledIds = new Set(myEnrollments.map((e) => e.course?._id))
-
-  // 아직 신청 안 한 강의 목록
-  const remainingCourses = allCourses.filter((c) => !enrolledIds.has(c._id))
+  if (loading) {
+    return <p className="text-sm text-gray-500 mt-2">시간표 로딩 중...</p>
+  }
 
   return (
-    <div className="space-y-4">
-      {/* 내 시간표 */}
-      <div>
+    <div className="mt-2 grid gap-6 md:grid-cols-2">
+      {/* 왼쪽: 내 시간표 */}
+      <section>
         <h3 className="font-semibold mb-2">내 시간표</h3>
-        {myEnrollments.length === 0 ? (
-          <p className="text-sm text-gray-500">아직 담은 강의가 없습니다.</p>
-        ) : (
-          <ul className="space-y-2">
-            {myEnrollments.map((en) => (
-              <li
-                key={en._id}
-                className="flex justify-between items-center border rounded px-3 py-2 text-sm"
-              >
-                <span>
-                  {en.course?.title} ({en.course?.code})
-                </span>
-                <button
-                  className="text-xs text-red-500 underline"
-                  onClick={() => removeEnrollment(en._id)}
-                >
-                  삭제
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      {/* 강의 추가 */}
-      <div>
-        <h3 className="font-semibold mb-2">강의 추가</h3>
-        {remainingCourses.length === 0 ? (
+        {enrollments.length === 0 ? (
           <p className="text-sm text-gray-500">
-            추가할 수 있는 강의가 없습니다.
+            아직 시간표에 추가한 강의가 없습니다.
           </p>
         ) : (
-          <ul className="space-y-2 max-h-64 overflow-y-auto border rounded p-2">
-            {remainingCourses.map((c) => (
-              <li
-                key={c._id}
-                className="flex justify-between items-center text-sm"
-              >
-                <span>
-                  {c.title} ({c.code})
-                </span>
-                <button
-                  className="text-xs text-blue-500 underline"
-                  onClick={() => addCourse(c._id)}
+          <ul className="space-y-2">
+            {enrollments.map((e) => {
+              const profName = getProfessorName(e.course.professor)
+              return (
+                <li
+                  key={e._id}
+                  className="flex items-center justify-between rounded border px-3 py-2 text-sm"
                 >
-                  추가
-                </button>
-              </li>
-            ))}
+                  <div>
+                    <div className="font-medium">
+                      <Link
+                        href={`/courses/${e.course._id}`}
+                        className="underline"
+                      >
+                        {e.course.title}
+                      </Link>{' '}
+                      ({e.course.code})
+                    </div>
+                    {profName && (
+                      <div className="text-xs text-gray-500">
+                        담당: {profName}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleRemove(e._id)}
+                    className="text-xs rounded bg-red-500 px-2 py-1 text-white hover:bg-red-600"
+                  >
+                    삭제
+                  </button>
+                </li>
+              )
+            })}
           </ul>
         )}
-      </div>
+      </section>
+
+      {/* 오른쪽: 강의 검색 + 시간표에 추가 */}
+      <section>
+        <h3 className="font-semibold mb-2">강의 검색 후 시간표에 추가</h3>
+
+        <div className="mb-3 flex items-center gap-2">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="강의명 / 코드 / 교수명으로 검색"
+            className="flex-1 rounded border px-3 py-2 text-sm outline-none"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              className="text-xs text-gray-500 hover:underline"
+            >
+              초기화
+            </button>
+          )}
+        </div>
+
+        {filteredCourses.length === 0 ? (
+          <p className="text-sm text-gray-500">검색 결과가 없습니다.</p>
+        ) : (
+          <ul className="space-y-2 max-h-72 overflow-y-auto">
+            {filteredCourses.map((c) => {
+              const already = isEnrolled(c._id)
+              const enrollment = enrollments.find((e) => e.course._id === c._id)
+              const profName = getProfessorName(c.professor)
+
+              return (
+                <li
+                  key={c._id}
+                  className="flex items-center justify-between rounded border px-3 py-2 text-sm"
+                >
+                  <div>
+                    <div className="font-medium">
+                      {c.title} ({c.code})
+                    </div>
+                    {profName && (
+                      <div className="text-xs text-gray-500">
+                        담당: {profName}
+                      </div>
+                    )}
+                  </div>
+                  {already && enrollment ? (
+                    <button
+                      onClick={() => handleRemove(enrollment._id)}
+                      className="text-xs rounded bg-gray-300 px-2 py-1 text-gray-800 hover:bg-gray-400"
+                    >
+                      시간표에서 제거
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleAdd(c._id)}
+                      className="text-xs rounded bg-blue-600 px-2 py-1 text-white hover:bg-blue-700"
+                    >
+                      시간표에 추가
+                    </button>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </section>
     </div>
   )
 }
