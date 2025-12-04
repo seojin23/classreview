@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
+import Link from 'next/link'
 import React from 'react'
-import Link from 'next/link' // Link 임포트
+import CourseDetailClient from './CourseDetailClient'
 
 interface Course {
   _id: string
@@ -8,7 +9,7 @@ interface Course {
   code: string
   credits: number
   professor: {
-    _id: string // 교수 ID도 받아야 링크 가능
+    _id: string
     name: string
   }
 }
@@ -20,9 +21,7 @@ interface Props {
 async function getCourse(id: string): Promise<Course | null> {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/courses/${id}`,
-    {
-      cache: 'no-store',
-    }
+    { cache: 'no-store' }
   )
   if (!res.ok) return null
   return res.json()
@@ -32,31 +31,55 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
   const course = await getCourse(id)
   return {
-    title: course ? `${course.title} 강의 상세` : '강의 상세 정보 없음',
+    title: course ? `${course.title} - 강의 상세` : '강의 정보 없음',
   }
 }
 
 export default async function CourseDetailPage({ params }: Props) {
   const { id } = await params
-
   const course = await getCourse(id)
 
-  if (!course) return <p>존재하지 않는 강의입니다.</p>
+  if (!course) return <p className="p-4">존재하지 않는 강의입니다.</p>
 
   return (
-    <div>
-      <h1>{course.title}</h1>
-      <p>코드: {course.code}</p>
-      <p>학점: {course.credits}</p>
-      <div>
-        담당 교수:{' '}
-        {course.professor ? (
-          <Link href={`/professors/${course.professor._id}`}>
-            <p>{course.professor.name}</p>
-          </Link>
-        ) : (
-          '정보 없음'
-        )}
+    <div className="max-w-3xl mx-auto py-10 px-4">
+      <h1 className="text-3xl font-bold text-gray-900 mb-6">{course.title}</h1>
+
+      <div className="border rounded-lg shadow-sm divide-y">
+        <div className="p-4 flex justify-between">
+          <span className="font-semibold text-gray-700">강의 코드</span>
+          <span className="text-gray-800">{course.code}</span>
+        </div>
+
+        <div className="p-4 flex justify-between">
+          <span className="font-semibold text-gray-700">학점</span>
+          <span className="text-gray-800">{course.credits}학점</span>
+        </div>
+
+        <div className="p-4 flex justify-between">
+          <span className="font-semibold text-gray-700">담당 교수</span>
+          {course.professor ? (
+            <Link
+              href={`/professors/${course.professor._id}`}
+              className="text-blue-600 hover:underline"
+            >
+              {course.professor.name}
+            </Link>
+          ) : (
+            <span className="text-gray-500">정보 없음</span>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-8">
+        <Link href="/courses" className="text-blue-600 hover:underline">
+          ← 강의 목록으로 돌아가기
+        </Link>
+      </div>
+
+      {/* ⬇ 댓글 UI 추가 (Client Component) */}
+      <div className="mt-12">
+        <CourseDetailClient courseId={id} />
       </div>
     </div>
   )
