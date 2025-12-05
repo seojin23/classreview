@@ -98,7 +98,6 @@ export default function CourseDetailClient({ courseId }: { courseId: string }) {
   useEffect(() => {
     fetchStats()
     fetchComments({ reset: true })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sort, courseId])
 
   // 새 댓글 작성
@@ -117,15 +116,9 @@ export default function CourseDetailClient({ courseId }: { courseId: string }) {
       }),
     })
 
-    if (!res.ok) {
-      console.error('댓글 작성 실패: HTTP error')
-      return
-    }
+    if (!res.ok) return
     const data = await res.json()
-    if (!data.ok) {
-      console.error('댓글 작성 실패:', data.error)
-      return
-    }
+    if (!data.ok) return
 
     await fetchStats()
     await fetchComments({ reset: true })
@@ -176,10 +169,7 @@ export default function CourseDetailClient({ courseId }: { courseId: string }) {
   async function handleDelete(id: string) {
     if (!confirm('정말 삭제하시겠습니까?')) return
 
-    const res = await fetch(`/api/comments/${id}`, {
-      method: 'DELETE',
-    })
-
+    const res = await fetch(`/api/comments/${id}`, { method: 'DELETE' })
     if (!res.ok) return
     const data = await res.json()
     if (!data.ok) return
@@ -188,15 +178,28 @@ export default function CourseDetailClient({ courseId }: { courseId: string }) {
     await fetchComments({ reset: true })
   }
 
+  // ⭐ 종합평점 계산
+  const overall =
+    stats.total > 0
+      ? (stats.avgContent + stats.avgHomework + stats.avgExam) / 3
+      : 0
+
   return (
     <div className="mt-10">
-      {/* 평균 별점 */}
-      <div className="mb-6 p-4 border rounded bg-gray-50">
-        <p className="text-lg font-bold">⭐ 평균 별점 ({stats.total}명)</p>
-        <p className="text-sm mt-1">
-          내용 {stats.avgContent.toFixed(1)} / 숙제{' '}
-          {stats.avgHomework.toFixed(1)} / 시험 {stats.avgExam.toFixed(1)}
+      {/* ⭐ NEW 평균 별점 박스 */}
+      <div className="mb-6 p-5 border rounded bg-gray-50">
+        {/* 종합 평점 크게 */}
+        <p className="text-xl font-bold flex items-center gap-2">
+          ⭐ 종합 평점 {overall.toFixed(1)} / 5.0
+          <span className="text-xs text-gray-500">({stats.total}명 참여)</span>
         </p>
+
+        {/* 세부 평균 – 작게 */}
+        <div className="mt-2 text-xs text-gray-600 space-y-1">
+          <p>내용: {stats.avgContent.toFixed(1)} / 5.0</p>
+          <p>숙제: {stats.avgHomework.toFixed(1)} / 5.0</p>
+          <p>시험: {stats.avgExam.toFixed(1)} / 5.0</p>
+        </div>
       </div>
 
       {/* 댓글 작성 */}
