@@ -1,3 +1,5 @@
+// src/app/courses/[id]/page.tsx
+import './course-detail.css'
 import { Metadata } from 'next'
 import Link from 'next/link'
 import CourseDetailClient from './CourseDetailClient'
@@ -10,7 +12,7 @@ interface Course {
   professor: {
     _id: string
     name: string
-  }
+  } | null
 }
 
 interface Props {
@@ -41,45 +43,46 @@ export default async function CourseDetailPage({ params }: Props) {
   if (!course) return <p className="p-4">존재하지 않는 강의입니다.</p>
 
   return (
-    <div className="max-w-3xl mx-auto py-10 px-4">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">{course.title}</h1>
+    <div className="detail-container">
+      {/* 제목 */}
+      <h1 className="detail-title">{course.title}</h1>
 
-      <div className="border rounded-lg shadow-sm divide-y">
-        <div className="p-4 flex justify-between">
-          <span className="font-semibold text-gray-700">강의 코드</span>
-          <span className="text-gray-800">{course.code}</span>
-        </div>
-
-        <div className="p-4 flex justify-between">
-          <span className="font-semibold text-gray-700">학점</span>
-          <span className="text-gray-800">{course.credits}학점</span>
-        </div>
-
-        <div className="p-4 flex justify-between">
-          <span className="font-semibold text-gray-700">담당 교수</span>
-          {course.professor ? (
-            <Link
-              href={`/professors/${course.professor._id}`}
-              className="text-blue-600 hover:underline"
-            >
-              {course.professor.name}
-            </Link>
-          ) : (
-            <span className="text-gray-500">정보 없음</span>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-8">
-        <Link href="/courses" className="text-blue-600 hover:underline">
+      {/* ← 강의 목록으로 돌아가기 (제목 밑, 카드 위) */}
+      <div className="back-wrapper">
+        <Link href="/courses" className="back-link">
           ← 강의 목록으로 돌아가기
         </Link>
       </div>
 
-      {/* ⬇ 댓글 UI 추가 */}
-      <div className="mt-12">
-        <CourseDetailClient course={course} />
+      {/* 강의 기본 정보 카드 */}
+      <div className="info-card">
+        <div className="info-row">
+          <span className="info-label">강의 코드</span>
+          <span className="info-value">{course.code}</span>
+        </div>
+
+        <div className="info-row">
+          <span className="info-label">학점</span>
+          <span className="info-value">{course.credits}학점</span>
+        </div>
+
+        <div className="info-row">
+          <span className="info-label">담당 교수</span>
+          {course.professor ? (
+            <Link
+              href={`/professors/${course.professor._id}`}
+              className="info-prof-link"
+            >
+              {course.professor.name}
+            </Link>
+          ) : (
+            <span className="info-value">정보 없음</span>
+          )}
+        </div>
       </div>
+
+      {/* 평점 통계 + 댓글 영역 (아래 컴포넌트에서 디자인) */}
+      <CourseDetailClient course={course} />
     </div>
   )
 }

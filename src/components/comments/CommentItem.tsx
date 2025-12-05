@@ -3,6 +3,7 @@
 
 import { useState } from 'react'
 import StarRatingInput from './StarRatingInput'
+import RatingStars from './RatingStars'
 
 interface Comment {
   _id: string
@@ -26,8 +27,8 @@ interface Props {
     contentRate: number
     homeworkRate: number
     examRate: number
-  }) => void | Promise<void>
-  onDelete: () => void | Promise<void>
+  }) => Promise<void> | void
+  onDelete: () => Promise<void> | void
 }
 
 export default function CommentItem({
@@ -62,41 +63,32 @@ export default function CommentItem({
     }
   }
 
+  /* ✏️ 수정 모드 */
   if (editing) {
     return (
-      <div className="border p-3 rounded bg-white">
+      <div className="comment-item-card">
         <textarea
-          aria-label="내용"
-          className="w-full border p-2 rounded mb-2"
+          aria-label="댓글 내용 수정"
+          className="comment-edit-textarea"
           rows={3}
           value={content}
           onChange={(e) => setContent(e.target.value)}
         />
 
-        <div className="flex gap-8 mb-3 text-sm">
+        <div className="flex gap-8 mb-4 text-sm">
           <div>
-            <p className="mb-1">내용</p>
-            <StarRatingInput
-              value={contentRate}
-              onChange={setContentRate}
-              size={20}
-            />
+            <p className="mb-1 font-semibold">내용</p>
+            <StarRatingInput value={contentRate} onChange={setContentRate} />
           </div>
+
           <div>
-            <p className="mb-1">숙제</p>
-            <StarRatingInput
-              value={homeworkRate}
-              onChange={setHomeworkRate}
-              size={20}
-            />
+            <p className="mb-1 font-semibold">숙제</p>
+            <StarRatingInput value={homeworkRate} onChange={setHomeworkRate} />
           </div>
+
           <div>
-            <p className="mb-1">시험</p>
-            <StarRatingInput
-              value={examRate}
-              onChange={setExamRate}
-              size={20}
-            />
+            <p className="mb-1 font-semibold">시험</p>
+            <StarRatingInput value={examRate} onChange={setExamRate} />
           </div>
         </div>
 
@@ -123,13 +115,43 @@ export default function CommentItem({
     )
   }
 
+  /* 📝 읽기 모드 */
   return (
-    <div className="border p-3 rounded bg-white">
-      <p className="text-sm mb-1 whitespace-pre-line">{comment.content}</p>
-      <p className="text-xs text-gray-500 mb-2">
-        ⭐ 내용 {comment.contentRate} / 숙제 {comment.homeworkRate} / 시험{' '}
-        {comment.examRate}
-      </p>
+    <div className="comment-item-card">
+      <p className="text-sm mb-3 whitespace-pre-line">{comment.content}</p>
+
+      {/* 별점 3개 가로 정렬 + (n명) 표시 없음 */}
+      <div className="flex gap-10 mb-3 text-sm items-center">
+        <div>
+          <p className="font-semibold mb-1">내용</p>
+          <RatingStars
+            score={comment.contentRate}
+            count={1}
+            showCount={false}
+            showValue={false}
+          />
+        </div>
+
+        <div>
+          <p className="font-semibold mb-1">숙제</p>
+          <RatingStars
+            score={comment.homeworkRate}
+            count={1}
+            showCount={false}
+            showValue={false}
+          />
+        </div>
+
+        <div>
+          <p className="font-semibold mb-1">시험</p>
+          <RatingStars
+            score={comment.examRate}
+            count={1}
+            showCount={false}
+            showValue={false}
+          />
+        </div>
+      </div>
 
       <button onClick={onLike} className="text-sm text-red-500 mr-4">
         ❤️ {comment.likes}
@@ -143,7 +165,7 @@ export default function CommentItem({
           >
             ✏️ 수정
           </button>
-          <button onClick={onDelete} className="text-sm text-gray-600">
+          <button onClick={() => onDelete()} className="text-sm text-gray-600">
             🗑 삭제
           </button>
         </>

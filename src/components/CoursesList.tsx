@@ -28,7 +28,7 @@ export default function CoursesList() {
   const [error, setError] = useState<string | null>(null)
 
   const [query, setQuery] = useState('')
-  const [category, setCategory] = useState('all') // ★ 검색 카테고리 추가
+  const [category, setCategory] = useState('all')
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([])
 
   const [page, setPage] = useState(1)
@@ -84,7 +84,7 @@ export default function CoursesList() {
   }, [courses])
 
   // ============================================
-  // 검색 기능 (카테고리별)
+  // 검색 기능
   // ============================================
   const handleSearch = () => {
     const q = query.trim().toLowerCase()
@@ -101,7 +101,7 @@ export default function CoursesList() {
 
       if (category === 'title') return title.includes(q)
       if (category === 'professor') return prof.includes(q)
-      return title.includes(q) || prof.includes(q) // all
+      return title.includes(q) || prof.includes(q)
     })
 
     setFilteredCourses(filtered)
@@ -122,7 +122,7 @@ export default function CoursesList() {
 
   return (
     <div className="course-list-wrapper">
-      {/* 검색창 UI */}
+      {/* 검색창 */}
       <div className="search-bar">
         <select
           aria-label="aaa"
@@ -160,18 +160,24 @@ export default function CoursesList() {
               href={`/courses/${course._id}`}
               className="course-card"
             >
+              {/* 제목 + 교수명 */}
               <div className="course-header">
                 <h2 className="course-title">{course.title}</h2>
+
+                <span className="course-prof-inline">
+                  {course.professor ? course.professor.name : '담당 교수 없음'}
+                </span>
+              </div>
+
+              {/* 별점 또는 평가 없음 */}
+              <div className="course-rating-area">
+                <RatingStars score={rating.score} count={rating.count} />
+              </div>
+
+              {/* 과목 코드 오른쪽 아래 */}
+              <div className="course-code-area">
                 <span className="course-code">{course.code}</span>
               </div>
-
-              <div className="course-prof">
-                {course.professor
-                  ? course.professor.name
-                  : '담당 교수 정보 없음'}
-              </div>
-
-              <RatingStars score={rating.score} count={rating.count} />
             </Link>
           )
         })}

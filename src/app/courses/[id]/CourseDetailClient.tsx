@@ -13,7 +13,9 @@ export default function CourseDetailClient({ course }: { course: any }) {
 
   if (!courseId) {
     return (
-      <div className="p-6">강의 정보를 불러올 수 없습니다. (courseId 없음)</div>
+      <div className="detail-error">
+        강의 정보를 불러올 수 없습니다. (courseId 없음)
+      </div>
     )
   }
 
@@ -41,54 +43,80 @@ export default function CourseDetailClient({ course }: { course: any }) {
   }
 
   return (
-    <div className="space-y-8">
-      {/* 1) 강의 기본 정보 */}
-      <section className="p-6 bg-white rounded-xl shadow-md">
-        <h1 className="text-2xl font-bold mb-2">{course.title}</h1>
-        <p className="text-gray-600">{course.professor?.name ?? '정보 없음'}</p>
+    <>
+      {/* ===========================
+          평점 통계 카드
+      =========================== */}
+      <section className="stat-card">
+        {/* 오른쪽 위 참여 인원 */}
+        <div className="stat-count-top">총 {stats.total}명 참여</div>
 
-        {course.description && (
-          <p className="text-gray-500 mt-1 whitespace-pre-line">
-            {course.description}
-          </p>
-        )}
-      </section>
+        <h2 className="stat-title">평점 통계</h2>
 
-      {/* 2) 평점 통계 */}
-      <section className="p-6 bg-white rounded-xl shadow-md space-y-4">
-        <h2 className="text-xl font-bold">평점 통계</h2>
+        {/* 종합 평점 (가운데 크게) */}
+        <div className="stat-main">
+          <p className="stat-main-label">종합 평점</p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <p className="font-semibold">종합 평점</p>
-            <RatingStars score={stats.avgAll} count={stats.total} />
-            <p className="text-gray-500">{stats.avgAll.toFixed(2)} / 5</p>
+          <div className="stat-main-stars">
+            <RatingStars
+              score={stats.avgAll}
+              count={stats.total}
+              showCount={false}
+              showValue={false}
+              size={30}
+            />
           </div>
 
-          <div>
-            <p className="font-semibold">강의력</p>
-            <RatingStars score={stats.avgContent} count={stats.total} />
-            <p className="text-gray-500">{stats.avgContent.toFixed(2)}</p>
-          </div>
-
-          <div>
-            <p className="font-semibold">과제량</p>
-            <RatingStars score={stats.avgHomework} count={stats.total} />
-            <p className="text-gray-500">{stats.avgHomework.toFixed(2)}</p>
-          </div>
-
-          <div>
-            <p className="font-semibold">시험 난이도</p>
-            <RatingStars score={stats.avgExam} count={stats.total} />
-            <p className="text-gray-500">{stats.avgExam.toFixed(2)}</p>
-          </div>
+          <p className="stat-main-score">{stats.avgAll.toFixed(2)} / 5.0</p>
         </div>
 
-        <p className="text-gray-500 text-sm">총 댓글 수: {stats.total}</p>
+        {/* 세부 평점 3개 - 가로 정렬 */}
+        <div className="stat-row">
+          <div className="stat-item">
+            <p className="stat-item-label">강의력</p>
+            <div className="stat-stars">
+              <RatingStars
+                score={stats.avgContent}
+                count={stats.total}
+                showCount={false}
+                showValue={false}
+              />
+            </div>
+            <p className="stat-item-score">{stats.avgContent.toFixed(2)}</p>
+          </div>
+
+          <div className="stat-item">
+            <p className="stat-item-label">과제량</p>
+            <div className="stat-stars">
+              <RatingStars
+                score={stats.avgHomework}
+                count={stats.total}
+                showCount={false}
+                showValue={false}
+              />
+            </div>
+            <p className="stat-item-score">{stats.avgHomework.toFixed(2)}</p>
+          </div>
+
+          <div className="stat-item">
+            <p className="stat-item-label">시험 난이도</p>
+            <div className="stat-stars">
+              <RatingStars
+                score={stats.avgExam}
+                count={stats.total}
+                showCount={false}
+                showValue={false}
+              />
+            </div>
+            <p className="stat-item-score">{stats.avgExam.toFixed(2)}</p>
+          </div>
+        </div>
       </section>
 
-      {/* 3) 댓글 작성 */}
-      <section className="p-6 bg-white rounded-xl shadow-md">
+      {/* ===========================
+          댓글 작성 카드
+      =========================== */}
+      <section className="comment-editor-card">
         <CommentEditor
           userId={currentUserId}
           onSubmit={async ({
@@ -110,21 +138,23 @@ export default function CourseDetailClient({ course }: { course: any }) {
         />
       </section>
 
-      {/* 4) 정렬 */}
-      <div className="flex justify-end">
+      {/* 정렬 드롭다운 */}
+      <div className="sort-area">
         <select
           aria-label="정렬"
           value={sort}
           onChange={handleSortChange}
-          className="border rounded-lg p-2"
+          className="sort-select"
         >
           <option value="latest">최신순</option>
           <option value="like">좋아요순</option>
         </select>
       </div>
 
-      {/* 5) 댓글 리스트 */}
-      <section className="space-y-4">
+      {/* ===========================
+          댓글 리스트
+      =========================== */}
+      <section className="comment-list">
         {loading && comments.length === 0 && (
           <p className="text-center text-gray-500">댓글을 불러오는 중...</p>
         )}
@@ -144,19 +174,18 @@ export default function CourseDetailClient({ course }: { course: any }) {
           />
         ))}
 
-        {/* 6) 더보기 */}
         {hasMore && (
-          <div className="flex justify-center mt-4">
+          <div className="loadmore-area">
             <button
               onClick={loadMore}
               disabled={loadingMore}
-              className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+              className="loadmore-btn"
             >
               {loadingMore ? '불러오는 중...' : '더 보기'}
             </button>
           </div>
         )}
       </section>
-    </div>
+    </>
   )
 }

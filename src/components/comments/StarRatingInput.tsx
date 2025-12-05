@@ -1,9 +1,10 @@
-// src/components/comments/StarRatingInput.tsx
-'use client'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faStar as solidStar } from '@fortawesome/free-solid-svg-icons'
+import { faStar as regularStar } from '@fortawesome/free-regular-svg-icons'
 
 interface Props {
   value: number
-  onChange: (n: number) => void
+  onChange: (v: number) => void
   size?: number
   disabled?: boolean
 }
@@ -11,21 +12,26 @@ interface Props {
 export default function StarRatingInput({
   value,
   onChange,
-  size = 24,
+  size = 22,
   disabled = false,
 }: Props) {
   return (
     <div className="flex gap-1">
       {[1, 2, 3, 4, 5].map((n) => (
-        <button
+        <span
           key={n}
-          type="button"
           onClick={() => !disabled && onChange(n)}
-          disabled={disabled}
-          className={disabled ? 'opacity-40 cursor-not-allowed' : ''}
+          className="cursor-pointer"
         >
-          <span style={{ fontSize: size }}>{n <= value ? '⭐' : '☆'}</span>
-        </button>
+          <FontAwesomeIcon
+            icon={n <= value ? solidStar : regularStar}
+            style={{
+              fontSize: size,
+              color: n <= value ? '#FFD700' : '#D0D0D0',
+              cursor: disabled ? 'default' : 'pointer',
+            }}
+          />
+        </span>
       ))}
     </div>
   )

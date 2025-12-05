@@ -25,6 +25,7 @@ export default function CommentEditor({ userId, onSubmit }: Props) {
   async function handleClick() {
     if (!content.trim() || loading || !userId) return
     setLoading(true)
+
     try {
       await onSubmit({
         content,
@@ -44,9 +45,9 @@ export default function CommentEditor({ userId, onSubmit }: Props) {
   }
 
   return (
-    <div className="border p-4 rounded bg-white mb-8">
+    <div className="comment-editor-card">
       <textarea
-        className="w-full border p-2 rounded mb-4"
+        className="comment-textarea"
         rows={3}
         placeholder={
           userId ? '댓글을 입력하세요' : '로그인 후 댓글을 작성할 수 있습니다.'
@@ -56,25 +57,27 @@ export default function CommentEditor({ userId, onSubmit }: Props) {
         disabled={!userId}
       />
 
-      <div className="grid grid-cols-3 gap-6 mb-4 text-sm">
+      <div className="grid grid-cols-3 gap-6 text-sm mb-4">
         <div>
-          <p className="mb-2">내용</p>
+          <p className="mb-2 font-semibold">내용</p>
           <StarRatingInput
             value={contentRate}
             onChange={setContentRate}
             disabled={!userId}
           />
         </div>
+
         <div>
-          <p className="mb-2">숙제</p>
+          <p className="mb-2 font-semibold">숙제</p>
           <StarRatingInput
             value={homeworkRate}
             onChange={setHomeworkRate}
             disabled={!userId}
           />
         </div>
+
         <div>
-          <p className="mb-2">시험</p>
+          <p className="mb-2 font-semibold">시험</p>
           <StarRatingInput
             value={examRate}
             onChange={setExamRate}
@@ -85,8 +88,8 @@ export default function CommentEditor({ userId, onSubmit }: Props) {
 
       <button
         onClick={handleClick}
-        className="bg-sky-500 text-white px-4 py-2 rounded"
         disabled={loading || !userId}
+        className="bg-purple-600 text-white px-4 py-2 rounded-lg"
       >
         {loading ? '작성 중...' : '작성'}
       </button>
