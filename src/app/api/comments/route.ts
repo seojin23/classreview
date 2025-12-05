@@ -1,103 +1,103 @@
-// src/app/api/comments/[id]/route.ts
+// src/app/api/comments/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import connectMongoDB from '@/libs/mongodb'
 import Comment from '@/models/comment'
-import { auth } from '@clerk/nextjs/server'
+import mongoose from 'mongoose'
 
-// Clerk에서 userId 가져오는 헬퍼
-async function getUserIdOrThrow() {
-  const { userId } = await auth()
-  if (!userId) {
-    throw new Error('UNAUTHORIZED')
-  }
-  return userId
-}
-
-// 🔧 댓글 수정 (PATCH /api/comments/[id])
-export async function PATCH(
-  req: NextRequest,
-  context: { params: Promise<{ id: string }> } // ⬅ params가 Promise라서 이렇게 타입 지정
-) {
+/**
+ * 댓글 작성 (POST)
+ * body: { courseId, content, contentRate, homeworkRate, examRate, userId }
+ */
+export async function POST(req: NextRequest) {
   try {
-    const { id } = await context.params // ⬅ 여기서 await로 풀어줌
-    const userId = await getUserIdOrThrow()
-    const { content, contentRate, homeworkRate, examRate } = await req.json()
-
     await connectMongoDB()
+    const { courseId, content, contentRate, homeworkRate, examRate, userId } =
+      await req.json()
 
-    const comment = await Comment.findById(id)
-    if (!comment) {
+    if (!courseId || !content) {
       return NextResponse.json(
-        { ok: false, error: 'NOT_FOUND' },
-        { status: 404 }
+        { ok: false, error: 'courseId와 content 필요' },
+        { status: 400 }
       )
     }
 
-    if (comment.user !== userId) {
+    if (!userId) {
       return NextResponse.json(
-        { ok: false, error: 'FORBIDDEN' },
-        { status: 403 }
+        { ok: false, error: 'userId 필요' },
+        { status: 400 }
       )
     }
 
-    comment.content = content
-    comment.contentRate = contentRate
-    comment.homeworkRate = homeworkRate
-    comment.examRate = examRate
-    await comment.save()
+    const courseObjId = new mongoose.Types.ObjectId(courseId)
 
-    return NextResponse.json({ ok: true })
-  } catch (e: any) {
-    if (e?.message === 'UNAUTHORIZED') {
-      return NextResponse.json(
-        { ok: false, error: '로그인이 필요합니다.' },
-        { status: 401 }
-      )
-    }
+    const newComment = await Comment.create({
+      user: userId,
+      course: courseObjId,
+      content,
+      contentRate,
+      homeworkRate,
+      examRate,
+      likes: [],
+    })
 
-    console.error('PATCH /api/comments/[id] 오류:', e)
-    return NextResponse.json({ ok: false, error: '서버 오류' }, { status: 500 })
+    return NextResponse.json({ ok: true, comment: newComment })
+  } catch (e) {
+    console.error('댓글 작성 오류:', e)
+    return NextResponse.json({ ok: false, error: '댓글 작성 실패' })
   }
 }
 
-// 🔧 댓글 삭제 (DELETE /api/comments/[id])
-export async function DELETE(
-  req: NextRequest,
-  context: { params: Promise<{ id: string }> } // ⬅ 여기도 동일하게 Promise 타입
-) {
+/**
+ * 댓글 통계 (GET)
+ * query: ?courseId=...
+ */
+export async function GET(req: NextRequest) {
   try {
-    const { id } = await context.params // ⬅ await 필수
-    const userId = await getUserIdOrThrow()
-
     await connectMongoDB()
 
-    const comment = await Comment.findById(id)
-    if (!comment) {
-      return NextResponse.json(
-        { ok: false, error: 'NOT_FOUND' },
-        { status: 404 }
-      )
+    const { searchParams } = new URL(req.url)
+    const courseId = searchParams.get('courseId')
+
+    if (!courseId) {
+      return NextResponse.json({ ok: false, error: 'courseId 필요' })
     }
 
-    if (comment.user !== userId) {
-      return NextResponse.json(
-        { ok: false, error: 'FORBIDDEN' },
-        { status: 403 }
-      )
+    const courseObjId = new mongoose.Types.ObjectId(courseId)
+
+    const comments = await Comment.find({ course: courseObjId })
+
+    if (!comments.length) {
+      return NextResponse.json({
+        ok: true,
+        data: {
+          stats: {
+            avgContent: 0,
+            avgHomework: 0,
+            avgExam: 0,
+            avgAll: 0,
+            total: 0,
+          },
+        },
+      })
     }
 
-    await Comment.findByIdAndDelete(id)
+    const sumContent = comments.reduce((a, c) => a + c.contentRate, 0)
+    const sumHomework = comments.reduce((a, c) => a + c.homeworkRate, 0)
+    const sumExam = comments.reduce((a, c) => a + c.examRate, 0)
 
-    return NextResponse.json({ ok: true })
-  } catch (e: any) {
-    if (e?.message === 'UNAUTHORIZED') {
-      return NextResponse.json(
-        { ok: false, error: '로그인이 필요합니다.' },
-        { status: 401 }
-      )
+    const total = comments.length
+
+    const stats = {
+      avgContent: sumContent / total,
+      avgHomework: sumHomework / total,
+      avgExam: sumExam / total,
+      avgAll: (sumContent + sumHomework + sumExam) / (total * 3),
+      total,
     }
 
-    console.error('DELETE /api/comments/[id] 오류:', e)
-    return NextResponse.json({ ok: false, error: '서버 오류' }, { status: 500 })
+    return NextResponse.json({ ok: true, data: { stats } })
+  } catch (e) {
+    console.error('댓글 통계 오류:', e)
+    return NextResponse.json({ ok: false })
   }
 }

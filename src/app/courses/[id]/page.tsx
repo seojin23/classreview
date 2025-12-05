@@ -1,6 +1,5 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
-import React from 'react'
 import CourseDetailClient from './CourseDetailClient'
 
 interface Course {
@@ -77,9 +76,9 @@ export default async function CourseDetailPage({ params }: Props) {
         </Link>
       </div>
 
-      {/* ⬇ 댓글 UI 추가 (Client Component) */}
+      {/* ⬇ 댓글 UI 추가 */}
       <div className="mt-12">
-        <CourseDetailClient courseId={id} />
+        <CourseDetailClient course={course} />
       </div>
     </div>
   )

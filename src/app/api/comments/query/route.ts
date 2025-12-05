@@ -1,14 +1,21 @@
-import { NextResponse } from 'next/server'
+// src/app/api/comments/query/route.ts
+import { NextRequest, NextResponse } from 'next/server'
 import connectMongoDB from '@/libs/mongodb'
 import Comment from '@/models/comment'
+import mongoose from 'mongoose'
 
-export async function GET(req: Request) {
+type SortObject = Record<string, 1 | -1>
+
+export async function GET(req: NextRequest) {
   try {
-    const url = new URL(req.url)
-    const courseId = url.searchParams.get('courseId')
-    const sort = url.searchParams.get('sort') || 'latest' // latest | like
-    const page = Number(url.searchParams.get('page') || 1)
-    const pageSize = 5
+    await connectMongoDB()
+
+    const { searchParams } = new URL(req.url)
+
+    const courseId = searchParams.get('courseId')
+    const sort = searchParams.get('sort') ?? 'latest'
+    const page = Number(searchParams.get('page') ?? 1)
+    const PAGE_SIZE = 5
 
     if (!courseId) {
       return NextResponse.json(
@@ -17,28 +24,32 @@ export async function GET(req: Request) {
       )
     }
 
-    await connectMongoDB()
+    const courseObjId = new mongoose.Types.ObjectId(courseId)
 
-    const sortOption =
-      sort === 'like' ? { likes: -1, createdAt: -1 } : { createdAt: -1 }
+    const sortStage: SortObject =
+      sort === 'like' ? { likesCount: -1, createdAt: -1 } : { createdAt: -1 }
 
-    const comments = await Comment.find({ course: courseId })
-      .sort(sortOption as any)
-      .skip((page - 1) * pageSize)
-      .limit(pageSize)
+    const results = await Comment.aggregate([
+      { $match: { course: courseObjId } },
 
-    const totalCount = await Comment.countDocuments({ course: courseId })
+      // likesCount 계산
+      { $addFields: { likesCount: { $size: '$likes' } } },
+
+      { $sort: sortStage },
+      { $skip: (page - 1) * PAGE_SIZE },
+      { $limit: PAGE_SIZE },
+    ])
+
+    const totalCount = await Comment.countDocuments({ course: courseObjId })
+    const hasMore = page * PAGE_SIZE < totalCount
 
     return NextResponse.json({
       ok: true,
-      comments,
-      hasMore: page * pageSize < totalCount,
+      comments: results,
+      hasMore,
     })
-  } catch (e: any) {
-    console.error('댓글 목록 조회 오류:', e)
-    return NextResponse.json(
-      { ok: false, error: '서버 내부 오류' },
-      { status: 500 }
-    )
+  } catch (e) {
+    console.error('댓글 페이지네이션 오류:', e)
+    return NextResponse.json({ ok: false, error: '서버 오류' }, { status: 500 })
   }
 }

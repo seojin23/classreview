@@ -1,27 +1,30 @@
+// src/components/comments/StarRatingInput.tsx
 'use client'
 
 interface Props {
   value: number
-  onChange: (value: number) => void
+  onChange: (n: number) => void
   size?: number
+  disabled?: boolean
 }
 
-export default function StarRatingInput({ value, onChange, size = 24 }: Props) {
-  const stars = [1, 2, 3, 4, 5]
-
+export default function StarRatingInput({
+  value,
+  onChange,
+  size = 24,
+  disabled = false,
+}: Props) {
   return (
-    <div className="flex gap-1 select-none">
-      {stars.map((star) => (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((n) => (
         <button
-          key={star}
+          key={n}
           type="button"
-          onClick={() => onChange(star)}
-          className="p-0 m-0 border-none bg-transparent cursor-pointer leading-none"
-          style={{ fontSize: size }}
+          onClick={() => !disabled && onChange(n)}
+          disabled={disabled}
+          className={disabled ? 'opacity-40 cursor-not-allowed' : ''}
         >
-          <span className={star <= value ? 'text-yellow-400' : 'text-gray-300'}>
-            ★
-          </span>
+          <span style={{ fontSize: size }}>{n <= value ? '⭐' : '☆'}</span>
         </button>
       ))}
     </div>

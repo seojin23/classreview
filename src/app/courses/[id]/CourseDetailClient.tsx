@@ -1,249 +1,162 @@
+// src/app/courses/[id]/CourseDetailClient.tsx
 'use client'
 
+import type { ChangeEvent } from 'react'
 import { useUser } from '@clerk/nextjs'
-import { useEffect, useState } from 'react'
-import CommentEditor from '@/components/comments/CommentEditor'
+import RatingStars from '@/components/comments/RatingStars'
 import CommentItem from '@/components/comments/CommentItem'
+import CommentEditor from '@/components/comments/CommentEditor'
+import { useComments } from './hooks/useComments'
 
-interface Comment {
-  _id: string
-  user: string
-  course: string
-  content: string
-  contentRate: number
-  homeworkRate: number
-  examRate: number
-  likes: number
-  likedUsers: string[]
-  createdAt: string
-  updatedAt: string
-}
+export default function CourseDetailClient({ course }: { course: any }) {
+  const courseId = course?._id
 
-interface Stats {
-  avgContent: number
-  avgHomework: number
-  avgExam: number
-  total: number
-}
-
-export default function CourseDetailClient({ courseId }: { courseId: string }) {
-  const { user } = useUser()
-
-  const [comments, setComments] = useState<Comment[]>([])
-  const [sort, setSort] = useState<'latest' | 'like'>('latest')
-  const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
-  const [stats, setStats] = useState<Stats>({
-    avgContent: 0,
-    avgHomework: 0,
-    avgExam: 0,
-    total: 0,
-  })
-
-  // 평균 별점
-  async function fetchStats() {
-    try {
-      const res = await fetch(`/api/comments?courseId=${courseId}`)
-      if (!res.ok) return
-      const data = await res.json()
-      if (data.ok) {
-        setStats({
-          avgContent: data.avgContent,
-          avgHomework: data.avgHomework,
-          avgExam: data.avgExam,
-          total: data.total,
-        })
-      }
-    } catch (e) {
-      console.error('fetchStats 실패:', e)
-    }
-  }
-
-  // 댓글 목록
-  async function fetchComments(options?: {
-    reset?: boolean
-    pageParam?: number
-  }) {
-    const reset = options?.reset ?? false
-    const targetPage = options?.pageParam ?? (reset ? 1 : page)
-
-    try {
-      const res = await fetch(
-        `/api/comments/query?courseId=${courseId}&sort=${sort}&page=${targetPage}`
-      )
-      if (!res.ok) return
-      const data = await res.json()
-      if (!data.ok) return
-
-      if (reset) {
-        setComments(data.comments)
-        setHasMore(data.hasMore)
-        setPage(1)
-      } else {
-        setComments((prev) => {
-          const map = new Map<string, Comment>()
-          prev.forEach((c) => map.set(c._id, c))
-          ;(data.comments as Comment[]).forEach((c) => map.set(c._id, c))
-          return Array.from(map.values())
-        })
-        setHasMore(data.hasMore)
-        setPage(targetPage)
-      }
-    } catch (e) {
-      console.error('fetchComments 실패:', e)
-    }
-  }
-
-  // 초기 및 정렬 변경 시
-  useEffect(() => {
-    fetchStats()
-    fetchComments({ reset: true })
-  }, [sort, courseId])
-
-  // 새 댓글 작성
-  async function handleCreate(payload: {
-    content: string
-    contentRate: number
-    homeworkRate: number
-    examRate: number
-  }) {
-    const res = await fetch('/api/comments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        courseId,
-        ...payload,
-      }),
-    })
-
-    if (!res.ok) return
-    const data = await res.json()
-    if (!data.ok) return
-
-    await fetchStats()
-    await fetchComments({ reset: true })
-  }
-
-  // 좋아요
-  async function handleLike(commentId: string) {
-    const res = await fetch('/api/comments/like', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ commentId }),
-    })
-
-    if (!res.ok) return
-    const data = await res.json()
-    if (!data.ok) return
-
-    setComments((prev) =>
-      prev.map((c) => (c._id === commentId ? { ...c, likes: data.likes } : c))
+  if (!courseId) {
+    return (
+      <div className="p-6">강의 정보를 불러올 수 없습니다. (courseId 없음)</div>
     )
   }
 
-  // 수정
-  async function handleEdit(
-    id: string,
-    fields: {
-      content: string
-      contentRate: number
-      homeworkRate: number
-      examRate: number
-    }
-  ) {
-    const res = await fetch(`/api/comments/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(fields),
-    })
+  const { user } = useUser()
+  const currentUserId = user?.id ?? null
 
-    if (!res.ok) return
-    const data = await res.json()
-    if (!data.ok) return
+  const {
+    comments,
+    stats,
+    sort,
+    hasMore,
+    loading,
+    loadingMore,
 
-    await fetchStats()
-    await fetchComments({ reset: true })
+    setSort,
+    loadMore,
+    createComment,
+    toggleLike,
+    editComment,
+    deleteComment,
+  } = useComments(courseId)
+
+  const handleSortChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    setSort(e.target.value as 'latest' | 'like')
   }
-
-  // 삭제
-  async function handleDelete(id: string) {
-    if (!confirm('정말 삭제하시겠습니까?')) return
-
-    const res = await fetch(`/api/comments/${id}`, { method: 'DELETE' })
-    if (!res.ok) return
-    const data = await res.json()
-    if (!data.ok) return
-
-    await fetchStats()
-    await fetchComments({ reset: true })
-  }
-
-  // ⭐ 종합평점 계산
-  const overall =
-    stats.total > 0
-      ? (stats.avgContent + stats.avgHomework + stats.avgExam) / 3
-      : 0
 
   return (
-    <div className="mt-10">
-      {/* ⭐ NEW 평균 별점 박스 */}
-      <div className="mb-6 p-5 border rounded bg-gray-50">
-        {/* 종합 평점 크게 */}
-        <p className="text-xl font-bold flex items-center gap-2">
-          ⭐ 종합 평점 {overall.toFixed(1)} / 5.0
-          <span className="text-xs text-gray-500">({stats.total}명 참여)</span>
-        </p>
+    <div className="space-y-8">
+      {/* 1) 강의 기본 정보 */}
+      <section className="p-6 bg-white rounded-xl shadow-md">
+        <h1 className="text-2xl font-bold mb-2">{course.title}</h1>
+        <p className="text-gray-600">{course.professor?.name ?? '정보 없음'}</p>
 
-        {/* 세부 평균 – 작게 */}
-        <div className="mt-2 text-xs text-gray-600 space-y-1">
-          <p>내용: {stats.avgContent.toFixed(1)} / 5.0</p>
-          <p>숙제: {stats.avgHomework.toFixed(1)} / 5.0</p>
-          <p>시험: {stats.avgExam.toFixed(1)} / 5.0</p>
+        {course.description && (
+          <p className="text-gray-500 mt-1 whitespace-pre-line">
+            {course.description}
+          </p>
+        )}
+      </section>
+
+      {/* 2) 평점 통계 */}
+      <section className="p-6 bg-white rounded-xl shadow-md space-y-4">
+        <h2 className="text-xl font-bold">평점 통계</h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <p className="font-semibold">종합 평점</p>
+            <RatingStars score={stats.avgAll} count={stats.total} />
+            <p className="text-gray-500">{stats.avgAll.toFixed(2)} / 5</p>
+          </div>
+
+          <div>
+            <p className="font-semibold">강의력</p>
+            <RatingStars score={stats.avgContent} count={stats.total} />
+            <p className="text-gray-500">{stats.avgContent.toFixed(2)}</p>
+          </div>
+
+          <div>
+            <p className="font-semibold">과제량</p>
+            <RatingStars score={stats.avgHomework} count={stats.total} />
+            <p className="text-gray-500">{stats.avgHomework.toFixed(2)}</p>
+          </div>
+
+          <div>
+            <p className="font-semibold">시험 난이도</p>
+            <RatingStars score={stats.avgExam} count={stats.total} />
+            <p className="text-gray-500">{stats.avgExam.toFixed(2)}</p>
+          </div>
         </div>
+
+        <p className="text-gray-500 text-sm">총 댓글 수: {stats.total}</p>
+      </section>
+
+      {/* 3) 댓글 작성 */}
+      <section className="p-6 bg-white rounded-xl shadow-md">
+        <CommentEditor
+          userId={currentUserId}
+          onSubmit={async ({
+            content,
+            contentRate,
+            homeworkRate,
+            examRate,
+            userId,
+          }) => {
+            if (!userId) return
+            await createComment({
+              content,
+              contentRate,
+              homeworkRate,
+              examRate,
+              userId,
+            })
+          }}
+        />
+      </section>
+
+      {/* 4) 정렬 */}
+      <div className="flex justify-end">
+        <select
+          aria-label="정렬"
+          value={sort}
+          onChange={handleSortChange}
+          className="border rounded-lg p-2"
+        >
+          <option value="latest">최신순</option>
+          <option value="like">좋아요순</option>
+        </select>
       </div>
 
-      {/* 댓글 작성 */}
-      <CommentEditor onSubmit={handleCreate} />
+      {/* 5) 댓글 리스트 */}
+      <section className="space-y-4">
+        {loading && comments.length === 0 && (
+          <p className="text-center text-gray-500">댓글을 불러오는 중...</p>
+        )}
 
-      {/* 정렬 */}
-      <div className="flex gap-4 mb-4">
-        <button
-          className={sort === 'latest' ? 'font-bold' : ''}
-          onClick={() => setSort('latest')}
-        >
-          최신순
-        </button>
-        <button
-          className={sort === 'like' ? 'font-bold' : ''}
-          onClick={() => setSort('like')}
-        >
-          추천순
-        </button>
-      </div>
+        {!loading && comments.length === 0 && (
+          <p className="text-center text-gray-400">아직 댓글이 없습니다.</p>
+        )}
 
-      {/* 댓글 목록 */}
-      <div className="space-y-4">
-        {comments.map((c) => (
+        {comments.map((comment) => (
           <CommentItem
-            key={c._id}
-            comment={c}
-            currentUserId={user?.id ?? null}
-            onLike={() => handleLike(c._id)}
-            onEdit={(fields) => handleEdit(c._id, fields)}
-            onDelete={() => handleDelete(c._id)}
+            key={comment._id}
+            comment={comment}
+            currentUserId={currentUserId}
+            onLike={() => toggleLike(comment._id)}
+            onEdit={(fields) => editComment(comment._id, fields)}
+            onDelete={() => deleteComment(comment._id)}
           />
         ))}
-      </div>
 
-      {/* 더보기 */}
-      {hasMore && (
-        <button
-          className="mt-4 w-full border p-2 rounded"
-          onClick={() => fetchComments({ reset: false, pageParam: page + 1 })}
-        >
-          더보기
-        </button>
-      )}
+        {/* 6) 더보기 */}
+        {hasMore && (
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+            >
+              {loadingMore ? '불러오는 중...' : '더 보기'}
+            </button>
+          </div>
+        )}
+      </section>
     </div>
   )
 }

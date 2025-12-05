@@ -47,7 +47,9 @@ export default function CourseDeleteForm() {
   return (
     <div>
       <h3>강의 삭제</h3>
-      <select value={selectedId}
+      <select
+        aria-label="삭제"
+        value={selectedId}
         onChange={(e) => setSelectedId(e.target.value)}
       >
         <option value="">-- 선택하세요 --</option>
