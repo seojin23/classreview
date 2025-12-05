@@ -17,8 +17,8 @@ interface Course {
 }
 
 interface RatingInfo {
-  score: number // 종합 평점
-  count: number // 평가 참여 수
+  score: number
+  count: number
 }
 
 export default function CoursesList() {
@@ -27,25 +27,19 @@ export default function CoursesList() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // 검색 상태
   const [query, setQuery] = useState('')
+  const [category, setCategory] = useState('all') // ★ 검색 카테고리 추가
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([])
 
-  // 페이지네이션
   const [page, setPage] = useState(1)
-  const limit = 10 // 페이지당 항목 수
+  const limit = 10
 
-  // ===============================
-  // 1) 강의 목록 불러오기
-  // ===============================
   useEffect(() => {
     async function fetchCourses() {
       try {
         setLoading(true)
         const res = await fetch('/api/courses')
-        if (!res.ok) {
-          throw new Error('강의 목록을 불러오지 못했습니다.')
-        }
+        if (!res.ok) throw new Error('강의 목록을 불러오지 못했습니다.')
         const data = await res.json()
         setCourses(data.courses || [])
         setFilteredCourses(data.courses || [])
@@ -58,9 +52,6 @@ export default function CoursesList() {
     fetchCourses()
   }, [])
 
-  // ===============================
-  // 2) 강의별 평점 불러오기
-  // ===============================
   useEffect(() => {
     if (courses.length === 0) return
 
@@ -92,9 +83,9 @@ export default function CoursesList() {
     fetchRatings()
   }, [courses])
 
-  // ===============================
-  // 3) 검색 기능
-  // ===============================
+  // ============================================
+  // 검색 기능 (카테고리별)
+  // ============================================
   const handleSearch = () => {
     const q = query.trim().toLowerCase()
 
@@ -107,54 +98,59 @@ export default function CoursesList() {
     const filtered = courses.filter((c) => {
       const title = c.title?.toLowerCase() || ''
       const prof = c.professor?.name?.toLowerCase() || ''
-      return title.includes(q) || prof.includes(q)
+
+      if (category === 'title') return title.includes(q)
+      if (category === 'professor') return prof.includes(q)
+      return title.includes(q) || prof.includes(q) // all
     })
 
     setFilteredCourses(filtered)
     setPage(1)
   }
 
-  // 검색창 enter 키 지원
   const onKeyDownSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') handleSearch()
   }
 
-  // ===============================
-  // 4) 페이지네이션 (프론트 전용)
-  // ===============================
   const start = (page - 1) * limit
   const end = start + limit
   const visibleCourses = filteredCourses.slice(start, end)
   const totalPages = Math.ceil(filteredCourses.length / limit)
 
-  // ===============================
-  // 렌더링
-  // ===============================
-  if (loading) return <p className="p-4">로딩 중...</p>
-  if (error) return <p className="p-4 text-red-500">{error}</p>
+  if (loading) return <p className="loading-text">로딩 중...</p>
+  if (error) return <p className="error-text">{error}</p>
 
   return (
-    <div className="space-y-4">
-      {/* 검색창 */}
-      <div className="flex gap-2 mb-4">
+    <div className="course-list-wrapper">
+      {/* 검색창 UI */}
+      <div className="search-bar">
+        <select
+          aria-label="aaa"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="search-select"
+        >
+          <option value="all">전체</option>
+          <option value="title">강의명</option>
+          <option value="professor">교수명</option>
+        </select>
+
         <input
           type="text"
           value={query}
-          placeholder="교수명 / 강의명 검색"
+          placeholder="검색어 입력"
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={onKeyDownSearch}
-          className="border p-2 rounded flex-grow"
+          className="search-input"
         />
-        <button
-          onClick={handleSearch}
-          className="px-4 py-2 bg-blue-500 text-white rounded"
-        >
+
+        <button onClick={handleSearch} className="search-btn">
           검색
         </button>
       </div>
 
       {/* 강의 리스트 */}
-      <div className="space-y-3">
+      <div className="course-list">
         {visibleCourses.map((course) => {
           const rating = ratings[course._id] || { score: 0, count: 0 }
 
@@ -162,14 +158,14 @@ export default function CoursesList() {
             <Link
               key={course._id}
               href={`/courses/${course._id}`}
-              className="block border rounded-lg p-4 hover:bg-gray-50 transition"
+              className="course-card"
             >
-              <div className="flex justify-between items-center mb-1">
-                <h2 className="font-semibold text-gray-900">{course.title}</h2>
-                <span className="text-xs text-gray-500">{course.code}</span>
+              <div className="course-header">
+                <h2 className="course-title">{course.title}</h2>
+                <span className="course-code">{course.code}</span>
               </div>
 
-              <div className="text-xs text-gray-600 mb-1">
+              <div className="course-prof">
                 {course.professor
                   ? course.professor.name
                   : '담당 교수 정보 없음'}
@@ -183,11 +179,11 @@ export default function CoursesList() {
 
       {/* 페이지네이션 */}
       {totalPages > 1 && (
-        <div className="flex gap-2 mt-4 justify-center">
+        <div className="pagination">
           <button
             onClick={() => setPage(page - 1)}
             disabled={page === 1}
-            className="px-3 py-1 border rounded disabled:opacity-40"
+            className="page-btn"
           >
             이전
           </button>
@@ -196,9 +192,7 @@ export default function CoursesList() {
             <button
               key={i}
               onClick={() => setPage(i + 1)}
-              className={`px-3 py-1 border rounded ${
-                page === i + 1 ? 'bg-gray-300' : ''
-              }`}
+              className={`page-index ${page === i + 1 ? 'active' : ''}`}
             >
               {i + 1}
             </button>
@@ -207,7 +201,7 @@ export default function CoursesList() {
           <button
             onClick={() => setPage(page + 1)}
             disabled={page === totalPages}
-            className="px-3 py-1 border rounded disabled:opacity-40"
+            className="page-btn"
           >
             다음
           </button>
