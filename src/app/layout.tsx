@@ -1,3 +1,4 @@
+// src/app/layout.tsx
 import type { Metadata } from 'next'
 import { ClerkProvider, SignedIn, SignedOut } from '@clerk/nextjs'
 import { Geist, Geist_Mono } from 'next/font/google'
