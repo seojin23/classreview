@@ -58,7 +58,7 @@ export default function Header() {
                 'text-xs underline ' +
                 (pathname === '/developers'
                   ? 'text-gray-300 italic'
-                  : 'text-gray-300 hover:text-gray-400')
+                  : 'text-gray-400 hover:text-gray-400')
               }
             >
               개발진
