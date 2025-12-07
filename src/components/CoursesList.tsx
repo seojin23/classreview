@@ -38,7 +38,9 @@ export default function CoursesList() {
     async function fetchCourses() {
       try {
         setLoading(true)
-        const res = await fetch('/api/courses')
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/courses`
+        )
         if (!res.ok) throw new Error('강의 목록을 불러오지 못했습니다.')
         const data = await res.json()
         setCourses(data.courses || [])
@@ -59,7 +61,9 @@ export default function CoursesList() {
       const entries: [string, RatingInfo][] = await Promise.all(
         courses.map(async (course) => {
           try {
-            const res = await fetch(`/api/comments?courseId=${course._id}`)
+            const res = await fetch(
+              `${process.env.NEXT_PUBLIC_API_URL}/api/comments?courseId=${course._id}`
+            )
             if (!res.ok) return [course._id, { score: 0, count: 0 }]
 
             const data = await res.json()

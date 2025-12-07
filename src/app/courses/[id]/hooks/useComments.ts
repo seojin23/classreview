@@ -45,9 +45,12 @@ export function useComments(courseId: string) {
   // 통계만 따로
   const refreshStats = useCallback(async () => {
     try {
-      const res = await fetch(`/api/comments?courseId=${courseId}`, {
-        cache: 'no-store',
-      })
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/comments?courseId=${courseId}`,
+        {
+          cache: 'no-store',
+        }
+      )
       if (!res.ok) return
       const json = await res.json()
       if (!json.ok) return
@@ -72,7 +75,7 @@ export function useComments(courseId: string) {
         setError(null)
 
         const res = await fetch(
-          `/api/comments/query?courseId=${courseId}&sort=${sort}&page=${targetPage}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/comments/query?courseId=${courseId}&sort=${sort}&page=${targetPage}`,
           { cache: 'no-store' }
         )
 
@@ -133,14 +136,17 @@ export function useComments(courseId: string) {
     userId: string
   }) {
     try {
-      const res = await fetch('/api/comments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          courseId,
-          ...payload,
-        }),
-      })
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/comments`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            courseId,
+            ...payload,
+          }),
+        }
+      )
 
       const data = await res.json().catch(() => null)
 
@@ -159,11 +165,14 @@ export function useComments(courseId: string) {
   // 좋아요 토글
   async function toggleLike(commentId: string) {
     try {
-      const res = await fetch('/api/comments/like', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ commentId }),
-      })
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/comments/like`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ commentId }),
+        }
+      )
 
       if (!res.ok) return
       const data = await res.json()
@@ -190,11 +199,14 @@ export function useComments(courseId: string) {
     }
   ) {
     try {
-      const res = await fetch(`/api/comments/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(fields),
-      })
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/comments/${id}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(fields),
+        }
+      )
 
       if (!res.ok) return
       const data = await res.json()
@@ -210,9 +222,12 @@ export function useComments(courseId: string) {
   // 댓글 삭제
   async function deleteComment(id: string) {
     try {
-      const res = await fetch(`/api/comments/${id}`, {
-        method: 'DELETE',
-      })
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/comments/${id}`,
+        {
+          method: 'DELETE',
+        }
+      )
 
       if (!res.ok) return
       const data = await res.json()

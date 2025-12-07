@@ -26,7 +26,11 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch(`/api/search?keyword=${encodeURIComponent(keyword)}`)
+    fetch(
+      `${
+        process.env.NEXT_PUBLIC_API_URL
+      }/api/search?keyword=${encodeURIComponent(keyword)}`
+    )
       .then((res) => res.json())
       .then((data) => {
         setCourses(data.courses || [])

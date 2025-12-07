@@ -54,8 +54,8 @@ export default function MyScheduleClient() {
       try {
         setLoading(true)
         const [enrollRes, courseRes] = await Promise.all([
-          fetch('/api/enrollments'),
-          fetch('/api/courses'),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/enrollments`),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses`),
         ])
 
         const enrollJson = await enrollRes.json()
@@ -94,11 +94,14 @@ export default function MyScheduleClient() {
   const handleAdd = async (courseId: string) => {
     try {
       setLoading(true)
-      const res = await fetch('/api/enrollments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ courseId }), // ✅ backend가 기대하는 필드 이름
-      })
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/enrollments`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ courseId }), // ✅ backend가 기대하는 필드 이름
+        }
+      )
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
@@ -107,7 +110,9 @@ export default function MyScheduleClient() {
       }
 
       // ✅ 새로고침 없이도 바로 반영되도록, 전체 시간표 다시 GET
-      const enrollRes = await fetch('/api/enrollments')
+      const enrollRes = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/enrollments`
+      )
       const enrollJson = await enrollRes.json()
       setEnrollments(enrollJson.enrollments ?? [])
     } catch (error) {
@@ -122,9 +127,12 @@ export default function MyScheduleClient() {
   const handleRemove = async (enrollmentId: string) => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/enrollments?id=${enrollmentId}`, {
-        method: 'DELETE',
-      })
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/enrollments?id=${enrollmentId}`,
+        {
+          method: 'DELETE',
+        }
+      )
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
@@ -133,7 +141,9 @@ export default function MyScheduleClient() {
       }
 
       // 삭제 후에도 GET으로 다시 동기화
-      const enrollRes = await fetch('/api/enrollments')
+      const enrollRes = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/enrollments`
+      )
       const enrollJson = await enrollRes.json()
       setEnrollments(enrollJson.enrollments ?? [])
     } catch (error) {
