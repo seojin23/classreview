@@ -188,9 +188,7 @@ export default function MyScheduleClient() {
 
       {/* 오른쪽: 검색 후 시간표에 추가 */}
       <div className="w-full md:w-1/2">
-        <h3 className="mb-2 text-lg font-semibold">
-          강의 검색 후 시간표에 추가
-        </h3>
+        <h3 className="mb-2 text-lg font-semibold">시간표에 추가</h3>
 
         <input
           type="text"
@@ -231,7 +229,7 @@ export default function MyScheduleClient() {
                         : 'bg-blue-600 hover:bg-blue-700'
                     }`}
                   >
-                    {inSchedule ? '시간표에서 제거됨' : '시간표에 추가'}
+                    {inSchedule ? '시간표에 추가됨' : '시간표에 추가'}
                   </button>
                 </li>
               )

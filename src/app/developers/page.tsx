@@ -78,7 +78,7 @@ export default function DevelopersList() {
                 href={dev.github}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-blue-600 underline break-all px-2"
+                className="text-sm text-blue-600 break-all px-2"
               >
                 <span className="font-semibold text-gray-700">Github: </span>
                 {dev.github}
@@ -90,7 +90,7 @@ export default function DevelopersList() {
                 href={dev.portfolio}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-blue-600 underline break-all px-2 mt-1"
+                className="text-sm text-blue-600 break-all px-2 mt-1"
               >
                 <span className="font-semibold text-gray-700">Portfolio: </span>
                 {dev.portfolio}
