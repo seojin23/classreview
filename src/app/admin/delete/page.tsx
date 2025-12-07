@@ -18,22 +18,50 @@ export default async function adminDeletePage() {
 
   if (!adminIds.includes(userId)) {
     return (
-      <div>
-        <h2>접근 권한이 없습니다.</h2>
-        <p>관리자만 접근할 수 있는 페이지입니다.</p>
+      <div className="min-h-screen flex items-center justify-center p-8">
+        <div className="max-w-xl w-full bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            접근 권한이 없습니다.
+          </h2>
+          <p className="text-sm text-gray-500">
+            관리자만 접근할 수 있는 페이지입니다.
+          </p>
+        </div>
       </div>
     )
   }
   return (
-    <div>
-      <h1>관리자: 삭제 페이지</h1>
-      <Link href="/admin">→관리자 홈 화면 이동</Link>
-      <div className="border-black border-2">
-        <ProfessorDeleteForm />
+    <main className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <Link
+            href="/admin"
+            className="inline-flex items-center text-gray-500 hover:text-indigo-600 transition-colors"
+          >
+            ← 관리자 홈으로
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6">
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              교수 삭제
+            </h2>
+            <div>
+              <ProfessorDeleteForm />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              강의 삭제
+            </h2>
+            <div>
+              <CourseDeleteForm />
+            </div>
+          </div>
+        </div>
       </div>
-      <div className="border-black border-2">
-        <CourseDeleteForm />
-      </div>
-    </div>
+    </main>
   )
 }

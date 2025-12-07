@@ -18,25 +18,50 @@ export default async function adminRegisterPage() {
 
   if (!adminIds.includes(userId)) {
     return (
-      <div>
-        <h2>접근 권한이 없습니다.</h2>
-        <p>관리자만 접근할 수 있는 페이지입니다.</p>
+      <div className="min-h-screen flex items-center justify-center p-8">
+        <div className="max-w-xl w-full bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            접근 권한이 없습니다.
+          </h2>
+          <p className="text-sm text-gray-500">
+            관리자만 접근할 수 있는 페이지입니다.
+          </p>
+        </div>
       </div>
     )
   }
   return (
-    <div>
-      <h1>관리자: 등록 페이지</h1>
-      <Link href="/admin">→관리자 홈 화면 이동</Link>
-      <br />
-      <h1>교수 추가:</h1>
-      <div className="outline-2 outline-black">
-        <ProfessorForm />
+    <main className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <Link
+            href="/admin"
+            className="inline-flex items-center text-gray-500 hover:text-indigo-600 transition-colors"
+          >
+            ← 관리자 홈으로
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6">
+          <section className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              교수 추가
+            </h2>
+            <div>
+              <ProfessorForm />
+            </div>
+          </section>
+
+          <section className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              강의 추가
+            </h2>
+            <div>
+              <CourseForm />
+            </div>
+          </section>
+        </div>
       </div>
-      <h1>강의 추가:</h1>
-      <div className="outline-black outline-2">
-        <CourseForm />
-      </div>
-    </div>
+    </main>
   )
 }
