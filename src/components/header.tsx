@@ -1,6 +1,4 @@
 'use client'
-
-import React from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
@@ -9,23 +7,11 @@ import {
   SignInButton,
   SignUpButton,
   UserButton,
-  useUser,
 } from '@clerk/nextjs'
-
-const adminIds =
-  (process.env.NEXT_PUBLIC_ADMIN_IDS ?? process.env.ADMIN_IDS)?.split(',') ?? []
 
 export default function Header() {
   const pathname = usePathname()
   const router = useRouter()
-
-  const { user, isSignedIn } = useUser()
-  const userId = user?.id || null
-  const isAdmin = !!userId && adminIds.includes(userId)
-
-  const handleSearchClick = () => {
-    router.push('/search')
-  }
 
   const isActive = (href: string) => pathname.startsWith(href)
 
@@ -38,20 +24,6 @@ export default function Header() {
 
         <div className="flex items-center gap-4 text-sm">
           <SignedIn>
-            {isAdmin && (
-              <Link
-                href="/admin"
-                className={
-                  'hover:text-indigo-600 ' +
-                  (isActive('/admin')
-                    ? 'font-semibold text-indigo-600'
-                    : 'text-indigo-500')
-                }
-              >
-                관리자
-              </Link>
-            )}
-
             <Link
               href="/developers"
               className={
@@ -99,19 +71,6 @@ export default function Header() {
             >
               교수 목록
             </Link>
-
-            <button
-              type="button"
-              onClick={handleSearchClick}
-              className={
-                'hover:text-indigo-600 ' +
-                (isActive('/search')
-                  ? 'font-semibold text-indigo-600'
-                  : 'text-gray-700')
-              }
-            >
-              검색
-            </button>
 
             <Link
               href="/me" //임시 링크
