@@ -74,12 +74,14 @@ export default function MyScheduleClient() {
   const isEnrolled = (courseId: string) =>
     enrollments.some((e) => e.course._id === courseId)
 
+  // src/app/me/MyScheduleClient.tsx 안의 handleAdd 함수만 수정
+
   const handleAdd = async (courseId: string) => {
     try {
       const res = await fetch('/api/enrollments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ course: courseId }),
+        body: JSON.stringify({ courseId }), // 여긴 아까 맞춰둔 그대로
       })
 
       if (!res.ok) {
@@ -88,14 +90,11 @@ export default function MyScheduleClient() {
         return
       }
 
-      const data = await res.json()
-      if (data.enrollment) {
-        setEnrollments((prev) => [...prev, data.enrollment])
-      } else {
-        const enrollRes = await fetch('/api/enrollments')
-        const enrollJson = await enrollRes.json()
-        setEnrollments(enrollJson.enrollments ?? [])
-      }
+      // 🔥 여기서부터 핵심: 그냥 다시 전체를 GET 해서 state 갱신
+      const enrollRes = await fetch('/api/enrollments')
+      const enrollJson = await enrollRes.json()
+
+      setEnrollments(enrollJson.enrollments ?? [])
     } catch (error) {
       console.error('시간표 추가 오류:', error)
       alert('시간표 추가 중 오류가 발생했습니다.')
