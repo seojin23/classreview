@@ -1,13 +1,11 @@
-import React from 'react'
-import Link from 'next/link'
+// src/app/courses/page.tsx
+import '../styles/course.css'
 import CoursesList from '@/components/CoursesList'
 
-export default function coursesPage() {
+export default function CoursesPage() {
   return (
-    <div className="flex flex-col items-center justify-center">
-      <p>강의 목록 화면</p>
-      <Link href="/">→홈 화면 이동</Link>
-      <br />
+    <div className="courses-page-container">
+      <h1 className="courses-title">강의 목록</h1>
       <CoursesList />
     </div>
   )
