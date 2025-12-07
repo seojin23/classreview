@@ -1,13 +1,13 @@
 import connectMongoDB from '@/libs/mongodb'
 import Professor from '@/models/professor'
 import Course from '@/models/course'
-import Evaluation from '@/models/evaluation'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/libs/auth'
+import Comment from '@/models/comment'
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAdmin(request)
+    await requireAdmin()
     const { name, department, email } = await request.json()
     if (!name || !department || !email) {
       return NextResponse.json(
@@ -57,7 +57,7 @@ export async function GET() {
 
 export async function DELETE(request: NextRequest) {
   try {
-    await requireAdmin(request)
+    await requireAdmin()
     const id = request.nextUrl.searchParams.get('id')
     if (!id) {
       return NextResponse.json({ message: 'ID is required' }, { status: 400 })
@@ -75,7 +75,7 @@ export async function DELETE(request: NextRequest) {
     const courses = await Course.find({ professor: id })
 
     for (const course of courses) {
-      await Evaluation.deleteMany({ course: course._id })
+      await Comment.deleteMany({ course: course._id })
     }
 
     await Course.deleteMany({ professor: id })
