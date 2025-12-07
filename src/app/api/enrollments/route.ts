@@ -8,7 +8,7 @@ import { requireAuth } from '@/libs/auth'
 // 📌 내 시간표 조회
 export async function GET(request: NextRequest) {
   try {
-    const userId = await requireAuth(request)
+    const userId = await requireAuth()
 
     await connectMongoDB()
     const enrollments = await Enrollment.find({ userId })
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 // 📌 강의 하나 시간표에 추가
 export async function POST(request: NextRequest) {
   try {
-    const userId = await requireAuth(request)
+    const userId = await requireAuth()
     const { courseId } = await request.json()
 
     if (!courseId) {
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
 // 📌 시간표에서 강의 삭제
 export async function DELETE(request: NextRequest) {
   try {
-    const userId = await requireAuth(request)
+    const userId = await requireAuth()
     const id = request.nextUrl.searchParams.get('id')
 
     if (!id) {
