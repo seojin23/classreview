@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import CoursesList from '@/components/CoursesList'
-import ProfessorsList from '@/components/ProfessorsList'
+import CoursesList from '@/components/HomeCoursesList'
+import ProfessorsList from '@/components/HomeProfessorsList'
 
 export default function Home() {
   const [keyword, setKeyword] = useState('')
