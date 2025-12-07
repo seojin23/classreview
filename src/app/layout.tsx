@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { ClerkProvider } from '@clerk/nextjs'
+import { ClerkProvider, SignedIn, SignedOut } from '@clerk/nextjs'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import Header from '@/components/header'
@@ -21,9 +21,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode
-}>) {
+}) {
   return (
     <ClerkProvider>
       <html lang="en">
@@ -31,7 +31,14 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           <Header />
-          {children}
+
+          <SignedIn>{children}</SignedIn>
+
+          <SignedOut>
+            <div className="flex items-center justify-center h-[80vh]">
+              <p className="text-xl font-semibold">로그인을 해주세요.</p>
+            </div>
+          </SignedOut>
         </body>
       </html>
     </ClerkProvider>
