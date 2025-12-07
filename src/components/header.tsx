@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   SignedIn,
   SignedOut,
@@ -17,24 +17,14 @@ const adminIds =
 
 export default function Header() {
   const pathname = usePathname()
-  const [showSearch, setShowSearch] = useState(false)
+  const router = useRouter()
 
   const { user, isSignedIn } = useUser()
   const userId = user?.id || null
   const isAdmin = !!userId && adminIds.includes(userId)
 
-  useEffect(() => {
-    setShowSearch(false)
-  }, [pathname])
-
-  useEffect(() => {
-    if (!isSignedIn) {
-      setShowSearch(false)
-    }
-  }, [isSignedIn])
-
-  const handleSearchToggle = () => {
-    setShowSearch((prev) => !prev)
+  const handleSearchClick = () => {
+    router.push('/search')
   }
 
   const isActive = (href: string) => pathname.startsWith(href)
@@ -52,10 +42,10 @@ export default function Header() {
               <Link
                 href="/admin"
                 className={
-                  'hover:text-red-600 ' +
+                  'hover:text-indigo-600 ' +
                   (isActive('/admin')
-                    ? 'font-semibold text-red-600'
-                    : 'text-red-500')
+                    ? 'font-semibold text-indigo-600'
+                    : 'text-indigo-500')
                 }
               >
                 관리자
@@ -63,11 +53,23 @@ export default function Header() {
             )}
 
             <Link
+              href="/developers"
+              className={
+                'text-xs underline ' +
+                (pathname === '/developers'
+                  ? 'text-gray-300 italic'
+                  : 'text-gray-300 hover:text-gray-400')
+              }
+            >
+              개발진
+            </Link>
+
+            <Link
               href="/"
               className={
-                'hover:text-blue-600 ' +
+                'hover:text-indigo-600 ' +
                 (pathname === '/'
-                  ? 'font-semibold text-blue-600'
+                  ? 'font-semibold text-indigo-600'
                   : 'text-gray-700')
               }
             >
@@ -77,9 +79,9 @@ export default function Header() {
             <Link
               href="/courses"
               className={
-                'hover:text-blue-600 ' +
+                'hover:text-indigo-600 ' +
                 (isActive('/courses')
-                  ? 'font-semibold text-blue-600'
+                  ? 'font-semibold text-indigo-600'
                   : 'text-gray-700')
               }
             >
@@ -89,9 +91,9 @@ export default function Header() {
             <Link
               href="/professors"
               className={
-                'hover:text-blue-600 ' +
+                'hover:text-indigo-600 ' +
                 (isActive('/professors')
-                  ? 'font-semibold text-blue-600'
+                  ? 'font-semibold text-indigo-600'
                   : 'text-gray-700')
               }
             >
@@ -100,10 +102,12 @@ export default function Header() {
 
             <button
               type="button"
-              onClick={handleSearchToggle}
+              onClick={handleSearchClick}
               className={
-                'hover:text-blue-600 ' +
-                (showSearch ? 'font-semibold text-blue-600' : 'text-gray-700')
+                'hover:text-indigo-600 ' +
+                (isActive('/search')
+                  ? 'font-semibold text-indigo-600'
+                  : 'text-gray-700')
               }
             >
               검색
@@ -112,9 +116,9 @@ export default function Header() {
             <Link
               href="/me" //임시 링크
               className={
-                'hover:text-blue-600 ' +
+                'hover:text-indigo-600 ' +
                 (isActive('/me')
-                  ? 'font-semibold text-blue-600'
+                  ? 'font-semibold text-indigo-600'
                   : 'text-gray-700')
               }
             >
@@ -126,7 +130,7 @@ export default function Header() {
 
           <SignedOut>
             <SignUpButton>
-              <button className="text-sm text-gray-700 underline hover:text-blue-600">
+              <button className="text-sm text-gray-700 underline hover:text-indigo-600">
                 회원가입
               </button>
             </SignUpButton>
@@ -139,33 +143,6 @@ export default function Header() {
           </SignedOut>
         </div>
       </div>
-
-      {showSearch && isSignedIn && (
-        <div className="border-b bg-gray-50">
-          <div className="mx-auto max-w-5xl px-4 py-2">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                //검색 시스템 연결
-              }}
-              className="flex items-center gap-2"
-            >
-              <input
-                type="text"
-                name="q"
-                placeholder="교수명 또는 강의명으로 검색"
-                className="flex-1 rounded border px-3 py-2 text-sm outline-none"
-              />
-              <button
-                type="submit"
-                className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-              >
-                검색
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
     </header>
   )
 }
