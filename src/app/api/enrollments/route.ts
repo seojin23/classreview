@@ -11,8 +11,12 @@ export async function GET(request: NextRequest) {
     const userId = await requireAuth()
 
     await connectMongoDB()
+
     const enrollments = await Enrollment.find({ userId })
-      .populate('course')
+      .populate({
+        path: 'course',
+        populate: { path: 'professor' }, // 🔥 course.professor까지 같이 채워 넣기
+      })
       .sort({ createdAt: 1 })
 
     return NextResponse.json({ enrollments })
@@ -46,6 +50,7 @@ export async function POST(request: NextRequest) {
 
     await connectMongoDB()
 
+    // 강의 존재 여부 확인
     const courseExists = await Course.exists({ _id: courseId })
     if (!courseExists) {
       return NextResponse.json(
