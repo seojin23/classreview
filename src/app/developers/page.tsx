@@ -14,7 +14,7 @@ const developers = [
     _id: '2',
     name: '손유승',
     github: 'https://github.com/Jannerf',
-    portfolio: 'https://google.com',
+    portfolio: 'https://sonyouseung-web-origin.vercel.app',
     avatar: '',
   },
   {
