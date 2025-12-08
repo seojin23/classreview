@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import CoursesList from '@/components/CoursesList'
-import ProfessorsList from '@/components/ProfessorsList'
+import CoursesList from '@/components/HomeCoursesList'
+import ProfessorsList from '@/components/HomeProfessorsList'
 
 export default function Home() {
   const [keyword, setKeyword] = useState('')
@@ -18,14 +18,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <div className="flex justify-end mb-6">
-        <Link href="/admin">
-          <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-md transition">
-            관리자 페이지
-          </button>
-        </Link>
-      </div>
-
       <div className="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-lg border border-gray-200 mb-10">
         <h1 className="text-3xl font-bold text-center mb-6 text-gray-900">
           강의 · 교수 검색
@@ -59,6 +51,14 @@ export default function Home() {
           </h2>
           <ProfessorsList />
         </section>
+      </div>
+
+      <div className="flex justify-end mb-6">
+        <Link href="/admin">
+          <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-md transition">
+            관리자 페이지
+          </button>
+        </Link>
       </div>
     </div>
   )
